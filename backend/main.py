@@ -45,10 +45,18 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Enable CORS for frontend
+# Enable CORS for frontend (Vercel + localhost dev)
+_ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "").split(",")
+_DEFAULT_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://*.vercel.app",
+]
+_cors_origins = [o.strip() for o in _ALLOWED_ORIGINS if o.strip()] or _DEFAULT_ORIGINS
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In development allow all origins including localhost:5173
+    allow_origins=["*"],  # wildcard keeps it simple for hackathon; restrict post-launch
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
