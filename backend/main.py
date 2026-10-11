@@ -27,6 +27,7 @@ from src.validator import run_validation_pipeline
 from src.classifier import diagnose_turbine, get_fleet_diagnosis, calculate_expected_power
 from src.solver import solve_maintenance_windows, compute_replan_diff
 from src.agent import process_analyze_query
+from src.ai.rag_policy import get_vector_store_status
 from src.benchmarks import run_benchmark_suite
 from src.models.schemas import (
     AnalyzeRequest, AnalyzeResponse,
@@ -70,6 +71,8 @@ def get_health():
         db_status = f"error: {str(e)}"
         t_count = 0
 
+    rag_status = get_vector_store_status()
+
     return HealthResponse(
         status="ok" if db_status == "connected" else "degraded",
         api="operational",
@@ -78,8 +81,20 @@ def get_health():
         llm="gemini-3.5-flash-lite (deterministic grounded)",
         turbines_loaded=t_count,
         last_load="2026-10-11T10:00:00Z",
-        active_model="Gemini 3.5 Flash Lite + Local CP-SAT"
+        active_model="Gemini 3.5 Flash Lite + Local CP-SAT",
+        vector_store=rag_status.get("vector_store", "unknown"),
+        vector_docs=rag_status.get("documents_indexed", 0)
     )
+
+# ─── 1b. GET /rag/status (ChromaDB Vector Store Inspector) ───
+
+@app.get("/rag/status")
+def rag_status_endpoint():
+    """
+    Returns ChromaDB vector store status — technology stack compliance proof.
+    Shows whether persistent ChromaDB is active and how many policy docs are indexed.
+    """
+    return get_vector_store_status()
 
 # ─── 2. POST /analyze (Section 6.1 Mandatory Contract) ─────
 

@@ -118,6 +118,8 @@ class HealthResponse(BaseModel):
     turbines_loaded: int
     last_load: str
     active_model: str
+    vector_store: Optional[str] = "unknown"
+    vector_docs: Optional[int] = 0
 
 # ─── FLEET & TURBINE DOMAIN SCHEMAS ───────────────────────
 
