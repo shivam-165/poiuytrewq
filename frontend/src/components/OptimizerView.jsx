@@ -1,31 +1,102 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Calendar, Sliders, Play, RefreshCw, AlertTriangle, CheckCircle2, 
   Clock, ShieldAlert, DollarSign, Wind, Wrench, Check, ArrowRight, GitCommit,
   UserCheck, Award
 } from 'lucide-react';
 import { INITIAL_SCHEDULE, REPLANNED_SCHEDULE } from '../data/fleetData';
+import { apiService } from '../services/api';
 
 export default function OptimizerView({ userRole }) {
   const [activeScenario, setActiveScenario] = useState('baseline');
   const [isReplanActive, setIsReplanActive] = useState(false);
   const [replanLoading, setReplanLoading] = useState(false);
+  const [scheduleData, setScheduleData] = useState(INITIAL_SCHEDULE);
+  const [replanDiff, setReplanDiff] = useState(null);
+  const [approvalStatus, setApprovalStatus] = useState({});
 
-  // Trigger POST /replan
-  const handleTriggerReplan = () => {
+  // Fetch initial schedule from backend
+  useEffect(() => {
+    apiService.getSchedule()
+      .then(apiWindows => {
+        if (apiWindows && apiWindows.length > 0) {
+          const mapped = apiWindows.map(w => ({
+            id: w.id || w.turbine_id,
+            turbine_id: w.turbine_id,
+            action: w.action || "Mechanical overhaul & inspection",
+            priority: w.priority_rank === 1 ? "High" : w.priority_rank === 2 ? "High" : "Medium",
+            window_start: w.window?.start || "2026-10-14",
+            window_end: w.window?.end || "2026-10-15",
+            crew: w.crew,
+            crane_id: w.crane,
+            crane_required: w.crane !== "none",
+            forecast_wind_ms: 3.4,
+            forecast_price_mwh: 32.0,
+            expected_energy_loss_mwh: w.expected_energy_loss_mwh,
+            estimated_impact: w.estimated_impact,
+            rationale: w.rationale,
+            requires_approval: w.requires_approval,
+            approval_status: w.approval_status
+          }));
+          setScheduleData(mapped);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Trigger POST /replan directly to FastAPI backend
+  const handleTriggerReplan = async () => {
     setReplanLoading(true);
-    setTimeout(() => {
-      setReplanLoading(false);
+    try {
+      const res = await apiService.replanSchedule();
+      setReplanDiff(res);
       setIsReplanActive(true);
-    }, 600);
+      if (res.updated_plan && res.updated_plan.length > 0) {
+        const mapped = res.updated_plan.map(w => ({
+          id: w.turbine_id,
+          turbine_id: w.turbine_id,
+          action: w.action,
+          priority: "High",
+          window_start: w.window.start,
+          window_end: w.window.end,
+          crew: w.crew,
+          crane_id: w.crane,
+          crane_required: w.crane !== "none",
+          forecast_wind_ms: 3.8,
+          forecast_price_mwh: 35.0,
+          expected_energy_loss_mwh: w.expected_energy_loss_mwh,
+          estimated_impact: w.estimated_impact,
+          rationale: w.rationale,
+          requires_approval: w.requires_approval,
+          approval_status: w.approval_status,
+          change_type: "shifted_earlier"
+        }));
+        setScheduleData(mapped);
+      }
+    } catch (e) {
+      setIsReplanActive(true);
+      setScheduleData(REPLANNED_SCHEDULE);
+    } finally {
+      setReplanLoading(false);
+    }
   };
 
   const handleResetReplan = () => {
     setIsReplanActive(false);
+    setReplanDiff(null);
+    setScheduleData(INITIAL_SCHEDULE);
   };
 
-  // Determine current active schedule data
-  const scheduleData = isReplanActive ? REPLANNED_SCHEDULE : INITIAL_SCHEDULE;
+  const handleScenarioSelect = (scenId) => {
+    setActiveScenario(scenId);
+    apiService.evaluateWhatIf(scenId).catch(() => {});
+  };
+
+  const handleApproveWindow = (windowId) => {
+    setApprovalStatus(prev => ({ ...prev, [windowId]: 'approved' }));
+    apiService.approveWindow(windowId, 'approved').catch(() => {});
+  };
+
 
   return (
     <div className="container" style={{ paddingTop: '2rem', paddingBottom: '4rem' }}>
@@ -190,7 +261,7 @@ export default function OptimizerView({ userRole }) {
           ].map((scen) => (
             <div 
               key={scen.id}
-              onClick={() => setActiveScenario(scen.id)}
+              onClick={() => handleScenarioSelect(scen.id)}
               style={{
                 padding: '0.75rem 0.85rem',
                 borderRadius: '8px',

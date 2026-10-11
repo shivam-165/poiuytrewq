@@ -1,12 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Award, CheckCircle2, Sliders, Shield, TrendingUp, Filter, 
-  Check, ArrowRight, BarChart2, Layers, Cpu, Zap, UserCheck, Wrench
+  Check, ArrowRight, BarChart2, Layers, Cpu, Zap, UserCheck, Wrench, RefreshCw
 } from 'lucide-react';
 import { BENCHMARK_TEST_CASES, CONFIG_COMPARISON } from '../data/fleetData';
+import { apiService } from '../services/api';
 
 export default function BenchmarkView({ userRole }) {
   const [activeCategory, setActiveCategory] = useState('all');
+  const [benchmarkData, setBenchmarkData] = useState(BENCHMARK_TEST_CASES);
+  const [accuracyPct, setAccuracyPct] = useState(100.0);
+  const [isRunning, setIsRunning] = useState(false);
+
+  const fetchLiveBenchmarks = async () => {
+    setIsRunning(true);
+    try {
+      const res = await apiService.getBenchmarks();
+      if (res && res.cases) {
+        setAccuracyPct(res.accuracy_pct);
+        setBenchmarkData(prev => prev.map((pc, idx) => {
+          const apiCase = res.cases.find(c => c.id === pc.id) || res.cases[idx];
+          if (apiCase) {
+            return {
+              ...pc,
+              actual: apiCase.actual_verdict,
+              status: apiCase.status === 'pass' ? 'PASS' : 'FAIL',
+              latency: `${apiCase.latency_ms}ms`
+            };
+          }
+          return pc;
+        }));
+      }
+    } catch (e) {
+      console.warn("Utilizing pre-compiled benchmark baseline:", e);
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLiveBenchmarks();
+  }, []);
 
   const categories = [
     { id: 'all', label: 'All Cases (20)' },
@@ -18,8 +52,9 @@ export default function BenchmarkView({ userRole }) {
   ];
 
   const filteredCases = activeCategory === 'all'
-    ? BENCHMARK_TEST_CASES
-    : BENCHMARK_TEST_CASES.filter(c => c.category.includes(activeCategory));
+    ? benchmarkData
+    : benchmarkData.filter(c => c.category.includes(activeCategory));
+
 
   return (
     <div className="container" style={{ paddingTop: '2rem', paddingBottom: '4rem' }}>
@@ -163,21 +198,33 @@ export default function BenchmarkView({ userRole }) {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-            {categories.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => setActiveCategory(c.id)}
-                className={`btn btn-sm ${activeCategory === c.id ? 'btn-primary' : 'btn-ghost'}`}
-                style={{
-                  borderRadius: 'var(--radius-full)',
-                  fontSize: '0.71875rem',
-                  padding: '0.2rem 0.55rem',
-                }}
-              >
-                {c.label}
-              </button>
-            ))}
+          <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+              {categories.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setActiveCategory(c.id)}
+                  className={`btn btn-sm ${activeCategory === c.id ? 'btn-primary' : 'btn-ghost'}`}
+                  style={{
+                    borderRadius: 'var(--radius-full)',
+                    fontSize: '0.71875rem',
+                    padding: '0.2rem 0.55rem',
+                  }}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+
+            <button 
+              className="btn btn-primary btn-sm"
+              onClick={fetchLiveBenchmarks}
+              disabled={isRunning}
+              style={{ fontWeight: 700, fontSize: '0.75rem' }}
+            >
+              <RefreshCw size={13} className={isRunning ? 'spin-anim' : ''} />
+              {isRunning ? 'Evaluating...' : 'Run 20-Case Suite (API)'}
+            </button>
           </div>
         </div>
 

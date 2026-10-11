@@ -1,26 +1,84 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   CheckCircle2, FileSpreadsheet, Play, RefreshCw, Upload, ShieldCheck, 
-  AlertTriangle, FileCheck, Check, Database, Clock, UserCheck, Wrench, Award
+  AlertTriangle, FileCheck, Check, Database, Clock, UserCheck, Wrench, Award,
+  UploadCloud, AlertCircle
 } from 'lucide-react';
 import { DATA_VALIDATION_RULES } from '../data/fleetData';
+import { apiService } from '../services/api';
 
 export default function DataIntegrityView({ userRole }) {
   const [isRunning, setIsRunning] = useState(false);
   const [selectedTable, setSelectedTable] = useState('all');
   const [hasRun, setHasRun] = useState(true);
+  const [rulesData, setRulesData] = useState(DATA_VALIDATION_RULES);
+  const [trapsDetected, setTrapsDetected] = useState([]);
+  const [uploadStatus, setUploadStatus] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
-  const handleRunValidation = () => {
+  // Fetch real validation from FastAPI backend
+  const handleRunValidation = async () => {
     setIsRunning(true);
-    setTimeout(() => {
+    try {
+      const res = await apiService.validateData();
+      if (res && res.checks) {
+        setRulesData(prev => prev.map((pr, idx) => {
+          const apiChk = res.checks.find(c => c.name.toLowerCase().includes(pr.name.toLowerCase().slice(0, 10))) || res.checks[idx];
+          if (apiChk) {
+            return {
+              ...pr,
+              details: apiChk.details,
+              status: apiChk.status.toUpperCase()
+            };
+          }
+          return pr;
+        }));
+        if (res.traps_detected) {
+          setTrapsDetected(res.traps_detected);
+        }
+      }
+    } catch (e) {
+      console.warn("Using local validation dataset:", e);
+    } finally {
       setIsRunning(false);
       setHasRun(true);
-    }, 550);
+    }
+  };
+
+  useEffect(() => {
+    handleRunValidation();
+  }, []);
+
+  // Handle Judge CSV Upload (POST /ingest)
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadStatus(null);
+    try {
+      const res = await apiService.uploadCSV(file);
+      setUploadStatus({
+        type: 'success',
+        message: `Successfully ingested ${res.rows_loaded} rows into table '${res.table_name}'. Database re-validated!`
+      });
+      handleRunValidation();
+    } catch (err) {
+      setUploadStatus({
+        type: 'error',
+        message: `Upload error: ${err.message}`
+      });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const filteredRules = selectedTable === 'all' 
-    ? DATA_VALIDATION_RULES 
-    : DATA_VALIDATION_RULES.filter(r => r.table.includes(selectedTable));
+    ? rulesData 
+    : rulesData.filter(r => r.table.includes(selectedTable));
+
 
   return (
     <div className="container" style={{ paddingTop: '2rem', paddingBottom: '4rem' }}>
@@ -169,16 +227,55 @@ export default function DataIntegrityView({ userRole }) {
           ))}
         </div>
 
-        <button 
-          className="btn btn-primary btn-sm"
-          onClick={handleRunValidation}
-          disabled={isRunning}
-          style={{ fontWeight: 700, fontSize: '0.75rem', flexShrink: 0 }}
-        >
-          <RefreshCw size={13} className={isRunning ? 'spin-anim' : ''} />
-          {isRunning ? 'Running Script...' : 'Re-Run Validation Script (FR-DATA-002)'}
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileUpload} 
+            accept=".csv" 
+            style={{ display: 'none' }} 
+          />
+          <button 
+            className="btn btn-secondary btn-sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            style={{ fontWeight: 650, fontSize: '0.75rem', flexShrink: 0 }}
+          >
+            <Upload size={13} className={isUploading ? 'spin-anim' : ''} />
+            {isUploading ? 'Uploading CSV...' : 'Upload CSV (POST /ingest)'}
+          </button>
+
+          <button 
+            className="btn btn-primary btn-sm"
+            onClick={handleRunValidation}
+            disabled={isRunning}
+            style={{ fontWeight: 700, fontSize: '0.75rem', flexShrink: 0 }}
+          >
+            <RefreshCw size={13} className={isRunning ? 'spin-anim' : ''} />
+            {isRunning ? 'Running Script...' : 'Re-Run Validation Script (FR-DATA-002)'}
+          </button>
+        </div>
       </div>
+
+      {/* Upload Notification Banner */}
+      {uploadStatus && (
+        <div style={{
+          backgroundColor: uploadStatus.type === 'success' ? '#f0fdf4' : '#fff1f2',
+          border: uploadStatus.type === 'success' ? '1px solid #bbf7d0' : '1px solid #fecdd3',
+          color: uploadStatus.type === 'success' ? '#15803d' : '#be123c',
+          padding: '0.75rem 1rem',
+          borderRadius: '8px',
+          marginBottom: '1.25rem',
+          fontSize: '0.8125rem',
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem'
+        }}>
+          {uploadStatus.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+          {uploadStatus.message}
+        </div>
+      )}
 
       {/* Validation Results Checklist */}
       <div className="card" style={{ overflow: 'hidden' }}>

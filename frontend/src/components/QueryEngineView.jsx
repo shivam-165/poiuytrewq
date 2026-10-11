@@ -5,6 +5,7 @@ import {
   UserCheck, Wrench, Award 
 } from 'lucide-react';
 import { SAMPLE_QUERIES, SAMPLE_TRACES } from '../data/fleetData';
+import { apiService } from '../services/api';
 
 export default function QueryEngineView({ userRole }) {
   const [selectedPreset, setSelectedPreset] = useState(0);
@@ -12,25 +13,48 @@ export default function QueryEngineView({ userRole }) {
   const [activeSubTab, setActiveSubTab] = useState('brief'); // 'brief', 'json', 'trace'
   const [isExecuting, setIsExecuting] = useState(false);
   const [hasCopied, setHasCopied] = useState(false);
+  const [activeQueryResult, setActiveQueryResult] = useState(SAMPLE_QUERIES[0]);
+  const [activeTraceData, setActiveTraceData] = useState(SAMPLE_TRACES['wf-3b91d0']);
 
-  const queryResult = SAMPLE_QUERIES[selectedPreset];
-  const traceData = SAMPLE_TRACES[queryResult.trace_run_id] || SAMPLE_TRACES['wf-3b91d0'];
+  const queryResult = activeQueryResult;
+  const traceData = activeTraceData;
 
-  const handleSelectPreset = (idx) => {
+  const handleSelectPreset = async (idx) => {
     setSelectedPreset(idx);
-    setCustomQuestion(SAMPLE_QUERIES[idx].question);
+    const q = SAMPLE_QUERIES[idx].question;
+    setCustomQuestion(q);
     setIsExecuting(true);
-    setTimeout(() => {
+    try {
+      const res = await apiService.analyze({ question: q });
+      if (res && res.run_id) {
+        setActiveQueryResult(res);
+        const tr = await apiService.getTrace(res.run_id);
+        if (tr) setActiveTraceData(tr);
+      }
+    } catch (e) {
+      setActiveQueryResult(SAMPLE_QUERIES[idx]);
+    } finally {
       setIsExecuting(false);
-    }, 400);
+    }
   };
 
-  const handleRunQuery = () => {
+  const handleRunQuery = async () => {
+    if (!customQuestion.trim()) return;
     setIsExecuting(true);
-    setTimeout(() => {
+    try {
+      const res = await apiService.analyze({ question: customQuestion });
+      if (res && res.run_id) {
+        setActiveQueryResult(res);
+        const tr = await apiService.getTrace(res.run_id);
+        if (tr) setActiveTraceData(tr);
+      }
+    } catch (e) {
+      console.warn("Analyze fallback:", e);
+    } finally {
       setIsExecuting(false);
-    }, 500);
+    }
   };
+
 
   const handleCopyJson = () => {
     navigator.clipboard.writeText(JSON.stringify(queryResult, null, 2));

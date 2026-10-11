@@ -1,0 +1,81 @@
+{
+  "dataset_name": "ZephyrPulse AI Synthetic Wind Fleet Benchmark Pack",
+  "version": "1.0-release",
+  "date": "2026-10-11",
+  "description": "High-fidelity synthetic SCADA, alarm, forecast, and crew datasets adhering to Annex B for 25 IEC Class II wind turbines.",
+  "tables": {
+    "scada_10min": {
+      "rows": 143963,
+      "turbines": 25,
+      "date_range": "2026-09-01T00:00:00Z to 2026-10-10T23:50:00Z",
+      "interval": "10-minute"
+    },
+    "alarms": {
+      "rows": 2000,
+      "date_range": "2026-06-01 to 2026-10-10"
+    },
+    "forecast": {
+      "rows": 744,
+      "date_range": "2026-10-11T00:00:00Z to 2026-11-10T23:00:00Z",
+      "granularity": "hourly"
+    },
+    "crew_calendar": {
+      "rows": 93,
+      "crews": 3,
+      "cranes": 1
+    }
+  },
+  "edge_cases_and_traps": [
+    {
+      "turbine": "T-07",
+      "type": "Real Fault",
+      "description": "Gearbox stage-2 bearing fault (+7.2\u00b0C excess temp, 4.8 mm/s vibration, 9% deficit)."
+    },
+    {
+      "turbine": "T-12",
+      "type": "Real Fault",
+      "description": "Generator bearing degradation (+8.5\u00b0C gen temp, 4.2 mm/s vibration)."
+    },
+    {
+      "turbine": "T-19",
+      "type": "Real Fault",
+      "description": "Pitch actuator hydraulic leak (12% deficit at moderate wind)."
+    },
+    {
+      "turbine": "T-05",
+      "type": "Wake Effect",
+      "description": "Downwind of T-04; underperformance occurs exclusively when wind direction is 250\u00b0-290\u00b0."
+    },
+    {
+      "turbine": "T-03, T-18",
+      "type": "Grid Curtailment",
+      "description": "Deliberate DSO setpoint cap at 400 kW during high wind periods with ALM-101 alarm."
+    },
+    {
+      "turbine": "T-22",
+      "type": "Icing Event",
+      "description": "Sub-zero ambient temperature (-0.8\u00b0C), 35% power output drop, no hardware alarm."
+    },
+    {
+      "turbine": "T-14",
+      "type": "Stuck Sensor",
+      "description": "Generator temperature frozen at constant 42.10\u00b0C with zero rolling variance."
+    },
+    {
+      "turbine": "T-09",
+      "type": "Communication Outage",
+      "description": "Missing 6 hours of 10-minute telemetry records on Oct 2, 2026."
+    }
+  ],
+  "validation_passed": [
+    "All turbine_ids in SCADA match master list [T-01..T-25]",
+    "No negative power_kw values",
+    "Rotor speed strictly within physical limits [0.0 - 25.0 RPM]",
+    "Timestamps regular with reported communication gaps",
+    "UTC timezone uniformity",
+    "Alarm end time strictly after start time",
+    "No crew double-booking",
+    "Row counts match data card manifest"
+  ],
+  "privacy": "100% synthetic data generated from physical mathematical wind turbine power curve formulations. No proprietary or personal data."
+}

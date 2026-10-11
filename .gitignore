@@ -17,11 +17,17 @@ build/
 
 # Python caches
 __pycache__/
+*/__pycache__/
 *.py[cod]
 *$py.class
+.pytest_cache/
+*/.pytest_cache/
 .venv/
 env/
 venv/
+*.db
+*.sqlite3
+
 
 # IDE & OS files
 .DS_Store

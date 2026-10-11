@@ -1,5 +1,6 @@
-import React from 'react';
-import { Wind, Shield, User, ArrowRight, Activity, Calendar, Terminal, CheckCircle2, Award, LogIn, LogOut, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Wind, Shield, User, ArrowRight, Activity, Calendar, Terminal, CheckCircle2, Award, LogIn, LogOut, Check, Wifi, Server } from 'lucide-react';
+import { apiService } from '../services/api';
 
 export default function Navbar({ 
   activeTab, 
@@ -12,6 +13,14 @@ export default function Navbar({
   currentUser,
   onSignOut
 }) {
+  const [backendStatus, setBackendStatus] = useState({ online: true, solver: 'OR-Tools' });
+
+  useEffect(() => {
+    apiService.getHealth()
+      .then(res => setBackendStatus({ online: res.status === 'ok', solver: 'OR-Tools CP-SAT' }))
+      .catch(() => setBackendStatus({ online: false, solver: 'Offline Mock' }));
+  }, []);
+
   return (
     <header style={{
       position: 'sticky',
@@ -65,6 +74,28 @@ export default function Navbar({
             }}>
               ENTERPRISE
             </span>
+
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              fontSize: '0.65625rem',
+              fontWeight: 650,
+              padding: '0.15rem 0.5rem',
+              borderRadius: '999px',
+              backgroundColor: backendStatus.online ? '#ecfdf5' : '#fff1f2',
+              border: backendStatus.online ? '1px solid #a7f3d0' : '1px solid #fecdd3',
+              color: backendStatus.online ? '#065f46' : '#be123c',
+            }}>
+              <span style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                backgroundColor: backendStatus.online ? '#10b981' : '#f43f5e',
+                boxShadow: backendStatus.online ? '0 0 6px #10b981' : 'none',
+              }} />
+              <span>API :8000 {backendStatus.online ? 'Connected' : 'Offline'}</span>
+            </div>
           </div>
         </div>
 

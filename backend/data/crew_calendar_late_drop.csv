@@ -1,0 +1,94 @@
+date,crew,crane,available,service_type,duration_days
+2026-10-11,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-10-11,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-10-11,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-10-12,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-10-12,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-10-12,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-10-13,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-10-13,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-10-13,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-10-14,Crew A,none,True,Major Mechanical Overhaul,2.0
+2026-10-14,Crew B,none,True,Gearbox Inspection & Lube,1.5
+2026-10-14,Crew C,none,True,Electrical & Pitch Servicing,1.0
+2026-10-15,Crew A,none,True,Major Mechanical Overhaul,2.0
+2026-10-15,Crew B,none,True,Gearbox Inspection & Lube,1.5
+2026-10-15,Crew C,none,True,Electrical & Pitch Servicing,1.0
+2026-10-16,Crew A,none,True,Major Mechanical Overhaul,2.0
+2026-10-16,Crew B,none,True,Gearbox Inspection & Lube,1.5
+2026-10-16,Crew C,none,True,Electrical & Pitch Servicing,1.0
+2026-10-17,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-10-17,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-10-17,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-10-18,Crew A,none,False,Major Mechanical Overhaul,2.0
+2026-10-18,Crew B,none,False,Gearbox Inspection & Lube,1.5
+2026-10-18,Crew C,none,False,Electrical & Pitch Servicing,1.0
+2026-10-19,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-10-19,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-10-19,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-10-20,Crew A,none,True,Major Mechanical Overhaul,2.0
+2026-10-20,Crew B,none,True,Gearbox Inspection & Lube,1.5
+2026-10-20,Crew C,none,True,Electrical & Pitch Servicing,1.0
+2026-10-21,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-10-21,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-10-21,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-10-22,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-10-22,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-10-22,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-10-23,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-10-23,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-10-23,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-10-24,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-10-24,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-10-24,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-10-25,Crew A,none,False,Major Mechanical Overhaul,2.0
+2026-10-25,Crew B,none,False,Gearbox Inspection & Lube,1.5
+2026-10-25,Crew C,none,False,Electrical & Pitch Servicing,1.0
+2026-10-26,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-10-26,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-10-26,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-10-27,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-10-27,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-10-27,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-10-28,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-10-28,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-10-28,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-10-29,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-10-29,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-10-29,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-10-30,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-10-30,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-10-30,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-10-31,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-10-31,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-10-31,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-11-01,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-11-01,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-11-01,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-11-02,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-11-02,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-11-02,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-11-03,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-11-03,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-11-03,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-11-04,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-11-04,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-11-04,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-11-05,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-11-05,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-11-05,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-11-06,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-11-06,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-11-06,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-11-07,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-11-07,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-11-07,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-11-08,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-11-08,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-11-08,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-11-09,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-11-09,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-11-09,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0
+2026-11-10,Crew A,Crane 1,True,Major Mechanical Overhaul,2.0
+2026-11-10,Crew B,Crane 1,True,Gearbox Inspection & Lube,1.5
+2026-11-10,Crew C,Crane 1,True,Electrical & Pitch Servicing,1.0

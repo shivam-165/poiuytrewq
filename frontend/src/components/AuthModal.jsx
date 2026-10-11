@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Lock, Mail, User, Shield, Check, ArrowRight, Building, Key, Eye, EyeOff } from 'lucide-react';
+import { apiService } from '../services/api';
 
 export default function AuthModal({ isOpen, onClose, onAuthSuccess, currentRole, setUserRole }) {
   const [authMode, setAuthMode] = useState('signin'); // 'signin' or 'signup'
@@ -14,11 +15,21 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, currentRole,
 
   if (!isOpen) return null;
 
-  const handleQuickLogin = (role, demoEmail, demoName) => {
+  const handleQuickLogin = async (role, demoEmail, demoName) => {
     setIsLoading(true);
     setErrorMsg('');
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const res = await apiService.login(demoEmail, 'demo123', role);
+      setUserRole(res.role || role);
+      onAuthSuccess({
+        name: res.name || demoName,
+        email: res.email || demoEmail,
+        role: res.role || role,
+        wind_farm: 'WF-25 Northern Escarpment (25 Turbines)',
+        token: res.token
+      });
+      onClose();
+    } catch (err) {
       setUserRole(role);
       onAuthSuccess({
         name: demoName,
@@ -27,10 +38,12 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, currentRole,
         wind_farm: 'WF-25 Northern Escarpment (25 Turbines)'
       });
       onClose();
-    }, 350);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
 
@@ -40,21 +53,36 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, currentRole,
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      const userName = authMode === 'signup' ? name : (email.split('@')[0] || 'User');
-      const role = authMode === 'signup' ? selectedRole : currentRole;
-      
-      setUserRole(role);
-      onAuthSuccess({
-        name: userName,
-        email: email,
-        role: role,
-        wind_farm: farmName
-      });
+    try {
+      if (authMode === 'signin') {
+        const res = await apiService.login(email, password, currentRole);
+        setUserRole(res.role || currentRole);
+        onAuthSuccess({
+          name: res.name || email.split('@')[0],
+          email: res.email || email,
+          role: res.role || currentRole,
+          wind_farm: farmName,
+          token: res.token
+        });
+      } else {
+        const res = await apiService.signup(name, email, password, selectedRole);
+        setUserRole(res.role || selectedRole);
+        onAuthSuccess({
+          name: res.name || name,
+          email: res.email || email,
+          role: res.role || selectedRole,
+          wind_farm: farmName,
+          token: res.token
+        });
+      }
       onClose();
-    }, 400);
+    } catch (err) {
+      setErrorMsg(err.message || 'Authentication error.');
+    } finally {
+      setIsLoading(false);
+    }
   };
+
 
   return (
     <div className="modal-overlay" onClick={onClose}>

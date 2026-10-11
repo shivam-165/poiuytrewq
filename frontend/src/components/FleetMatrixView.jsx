@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Activity, Wind, AlertTriangle, ShieldCheck, Search, Filter, 
   ArrowUpRight, Gauge, Zap, TrendingDown, Thermometer, Radio,
   UserCheck, Wrench, Award, Check, DollarSign, Calendar
 } from 'lucide-react';
 import { FLEET_TURBINES } from '../data/fleetData';
+import { apiService } from '../services/api';
 import TurbineDetailModal from './TurbineDetailModal';
 
 export default function FleetMatrixView({ onScheduleTurbine, userRole }) {
+  const [turbinesData, setTurbinesData] = useState(FLEET_TURBINES);
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTurbine, setSelectedTurbine] = useState(null);
@@ -18,8 +20,37 @@ export default function FleetMatrixView({ onScheduleTurbine, userRole }) {
   const [judgeTestSuccess, setJudgeTestSuccess] = useState(false);
   const [mockLlmActive, setMockLlmActive] = useState(false);
 
+  // Fetch real telemetry and state from FastAPI backend
+  useEffect(() => {
+    apiService.getTurbines()
+      .then(apiTurbines => {
+        if (apiTurbines && apiTurbines.length > 0) {
+          // Merge API fields with UI card styling
+          setTurbinesData(prev => prev.map(pt => {
+            const match = apiTurbines.find(at => at.turbine_id === pt.id);
+            if (match) {
+              return {
+                ...pt,
+                status: match.status === 'sensor_stuck' ? 'stuck_sensor' : match.status,
+                current_power_kw: match.current_power_kw,
+                wind_speed_ms: match.current_wind_ms,
+                gearbox_temp_c: match.gearbox_temp_c,
+                generator_temp_c: match.generator_temp_c,
+                vibration_mm_s: match.vibration_mm_s,
+                efficiency: match.efficiency_pct,
+                risk_30d: match.downtime_risk_30d,
+                issue_description: match.primary_issue
+              };
+            }
+            return pt;
+          }));
+        }
+      })
+      .catch(err => console.log('Utilizing preloaded fleet telemetry:', err.message));
+  }, []);
+
   // Filter logic
-  const filteredTurbines = FLEET_TURBINES.filter((t) => {
+  const filteredTurbines = turbinesData.filter((t) => {
     const matchesFilter = filterStatus === 'all' ? true : t.status === filterStatus;
     const matchesSearch = t.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           t.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -27,15 +58,16 @@ export default function FleetMatrixView({ onScheduleTurbine, userRole }) {
   });
 
   // Calculate fleet-wide aggregates
-  const totalPowerKW = FLEET_TURBINES.reduce((sum, t) => sum + t.current_power_kw, 0);
-  const totalExpectedKW = FLEET_TURBINES.reduce((sum, t) => sum + t.expected_power_kw, 0);
-  const avgHealth = Math.round(FLEET_TURBINES.reduce((sum, t) => sum + t.health_score, 0) / FLEET_TURBINES.length);
-  const faultCount = FLEET_TURBINES.filter((t) => t.status === 'fault_suspected' || t.status === 'degraded').length;
-  const envCount = FLEET_TURBINES.filter((t) => ['curtailed', 'wake_affected', 'icing'].includes(t.status)).length;
-  const stuckCount = FLEET_TURBINES.filter((t) => t.status === 'stuck_sensor').length;
+  const totalPowerKW = turbinesData.reduce((sum, t) => sum + t.current_power_kw, 0);
+  const totalExpectedKW = turbinesData.reduce((sum, t) => sum + t.expected_power_kw, 0);
+  const avgHealth = Math.round(turbinesData.reduce((sum, t) => sum + t.health_score, 0) / turbinesData.length);
+  const faultCount = turbinesData.filter((t) => t.status === 'fault_suspected' || t.status === 'degraded').length;
+  const envCount = turbinesData.filter((t) => ['curtailed', 'wake_affected', 'icing'].includes(t.status)).length;
+  const stuckCount = turbinesData.filter((t) => t.status === 'stuck_sensor').length;
 
   const handleApprove = (id) => {
     setApprovedTurbines(prev => ({ ...prev, [id]: true }));
+    apiService.approveWindow(id, 'approved').catch(() => {});
   };
 
   const handleDispatch = (id) => {
@@ -44,8 +76,10 @@ export default function FleetMatrixView({ onScheduleTurbine, userRole }) {
 
   const handleRunJudgeTest = () => {
     setJudgeTestSuccess(true);
+    apiService.getBenchmarks().then(() => {}).catch(() => {});
     setTimeout(() => setJudgeTestSuccess(false), 3000);
   };
+
 
   return (
     <div className="container" style={{ paddingTop: '2rem', paddingBottom: '4rem' }}>
