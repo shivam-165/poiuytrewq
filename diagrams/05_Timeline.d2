@@ -1,0 +1,232 @@
+
+# =========================================================
+# DEVELOPMENT TIMELINE — Wind Fleet Health & Maintenance Optimizer
+# 1-Day Hackathon | Agile Sprints (Condensed)
+# Paste into https://play.d2lang.com  or  d2 05_Timeline.d2 timeline.svg
+# =========================================================
+
+direction: right
+
+# ─── STYLES ───────────────────────────────────────────────
+classes: {
+  phase_prep: {
+    style: {
+      fill: "#1e293b"
+      stroke: "#64748b"
+      stroke-width: 2
+      font-color: "#cbd5e1"
+      border-radius: 8
+    }
+  }
+  sprint0: {
+    style: {
+      fill: "#172554"
+      stroke: "#3b82f6"
+      stroke-width: 2
+      font-color: "#dbeafe"
+      border-radius: 8
+    }
+  }
+  sprint1: {
+    style: {
+      fill: "#1e1b4b"
+      stroke: "#8b5cf6"
+      stroke-width: 2
+      font-color: "#ede9fe"
+      border-radius: 8
+    }
+  }
+  sprint2: {
+    style: {
+      fill: "#064e3b"
+      stroke: "#10b981"
+      stroke-width: 2
+      font-color: "#d1fae5"
+      border-radius: 8
+    }
+  }
+  sprint3: {
+    style: {
+      fill: "#7c2d12"
+      stroke: "#f97316"
+      stroke-width: 2
+      font-color: "#fed7aa"
+      border-radius: 8
+    }
+  }
+  sprint4: {
+    style: {
+      fill: "#3b0764"
+      stroke: "#e879f9"
+      stroke-width: 2
+      font-color: "#fae8ff"
+      border-radius: 8
+    }
+  }
+  milestone: {
+    style: {
+      fill: "#fbbf24"
+      stroke: "#d97706"
+      stroke-width: 3
+      font-color: "#1c1917"
+      bold: true
+      border-radius: 50
+    }
+  }
+  owner_backend: {
+    style: {
+      fill: "#1e3a5f"
+      stroke: "#60a5fa"
+      stroke-width: 1
+      font-color: "#bfdbfe"
+      border-radius: 4
+      font-size: 11
+    }
+  }
+  owner_ai: {
+    style: {
+      fill: "#2e1065"
+      stroke: "#a78bfa"
+      stroke-width: 1
+      font-color: "#ede9fe"
+      border-radius: 4
+      font-size: 11
+    }
+  }
+  owner_fe: {
+    style: {
+      fill: "#0c4a6e"
+      stroke: "#38bdf8"
+      stroke-width: 1
+      font-color: "#e0f2fe"
+      border-radius: 4
+      font-size: 11
+    }
+  }
+  owner_all: {
+    style: {
+      fill: "#14532d"
+      stroke: "#4ade80"
+      stroke-width: 1
+      font-color: "#dcfce7"
+      border-radius: 4
+      font-size: 11
+    }
+  }
+}
+
+# ─── PRE-HACKATHON ────────────────────────────────────────
+
+prep: "PRE-HACKATHON\n(Day Before)" {
+  class: phase_prep
+
+  p1: "Set up GitHub repo\n+ branch structure\n[Team Lead — 20 min]" {class: owner_all}
+  p2: "Pull LLM model /\nTest API keys\n[AI Engineer — 30 min]" {class: owner_ai}
+  p3: "Docker base images\n+ DB schema draft\n[Backend — 40 min]" {class: owner_backend}
+  p4: "Review Participant Guide\n+ agree on scope\n[All — 30 min]" {class: owner_all}
+
+  p1 -> p2
+  p2 -> p3
+  p3 -> p4
+}
+
+# ─── SPRINT 0 ─────────────────────────────────────────────
+
+s0: "SPRINT 0\nSetup & Foundation\n[Hour 0 → 1]" {
+  class: sprint0
+
+  s0_be: "Backend Engineer\n────────────────\n• FastAPI project init\n• Docker Compose setup\n• PostgreSQL container\n• DB migrations run\n• CSV Loader (4 files)\n• Validation script\n  (8 checks)" {class: owner_backend}
+
+  s0_fe: "Frontend Engineer\n────────────────\n• React app init\n• Basic layout scaffold\n• Route structure\n• API client setup" {class: owner_fe}
+
+  s0_ai: "AI / ML Engineer\n────────────────\n• Review data schema\n• Plan feature list\n• Setup scikit-learn\n• Baseline ML env" {class: owner_ai}
+
+  s0_ml1: "MILESTONE M1\ndocker compose up works\nValidation script runs" {class: milestone}
+
+  s0_be -> s0_ml1
+  s0_fe -> s0_ml1
+  s0_ai -> s0_ml1
+}
+
+# ─── SPRINT 1 ─────────────────────────────────────────────
+
+s1: "SPRINT 1\nCore AI Pipeline\n[Hour 1 → 3]" {
+  class: sprint1
+
+  s1_ai1: "AI / ML Engineer\n────────────────\n• Feature engineering\n  (rolling stats, deviation)\n• Isolation Forest model\n• Rule classifiers:\n  curtailment, icing\n  wake, stuck sensor\n• Anomaly scores\n  per turbine" {class: owner_ai}
+
+  s1_ai2: "AI / ML Engineer\n────────────────\n• LangChain setup\n• LLM tool definitions:\n  get_scada_summary()\n  get_fault_score()\n  get_alarm_history()\n• Structured output\n  (Pydantic models)\n• MOCK_LLM=true mode" {class: owner_ai}
+
+  s1_be: "Backend Engineer\n────────────────\n• POST /analyze wired\n• Trace Logger service\n• GET /trace/{run_id}\n• DB write:\n  fault_assessments\n  trace_records" {class: owner_backend}
+
+  s1_fe: "Frontend Engineer\n────────────────\n• Fleet health grid\n  (25 turbine cards)\n• Color status system\n• Turbine detail panel\n• API mock calls" {class: owner_fe}
+
+  s1_ml2: "MILESTONE M2\nPOST /analyze returns\nvalid schema for all turbines" {class: milestone}
+
+  s1_ai1 -> s1_ai2
+  s1_ai2 -> s1_ml2
+  s1_be -> s1_ml2
+  s1_fe -> s1_ml2
+}
+
+# ─── SPRINT 2 ─────────────────────────────────────────────
+
+s2: "SPRINT 2\nScheduling + UI\n[Hour 3 → 5]" {
+  class: sprint2
+
+  s2_ai: "AI / ML Engineer\n────────────────\n• Constraint-based\n  maintenance scheduler\n• Annex A policy engine\n• Storm window avoidance\n• No crew double-booking\n• Plan diff generator" {class: owner_ai}
+
+  s2_be: "Backend Engineer\n────────────────\n• POST /replan endpoint\n• GET /plan endpoint\n• GET /health endpoint\n• DB write:\n  service_plans\n  maintenance_windows" {class: owner_backend}
+
+  s2_fe: "Frontend Engineer\n────────────────\n• Maintenance calendar\n  (Gantt / grid view)\n• Wire fleet health\n  grid to real API\n• Re-plan button + diff\n• Validation panel" {class: owner_fe}
+
+  s2_ml3: "MILESTONE M3\nFull schedule generated\nDashboard shows live data" {class: milestone}
+
+  s2_ai -> s2_ml3
+  s2_be -> s2_ml3
+  s2_fe -> s2_ml3
+}
+
+# ─── SPRINT 3 ─────────────────────────────────────────────
+
+s3: "SPRINT 3\nEvaluation + Polish\n[Hour 5 → 7]" {
+  class: sprint3
+
+  s3_ai: "AI / ML Engineer\n────────────────\n• Build eval set\n  (20+ cases):\n  3+ true faults\n  3+ environmental\n  2+ stuck sensor\n  2+ replan cases\n  2+ what-if\n• Run evaluation\n• Config A vs Config B\n• Evaluation report\n• Data card (Annex D)" {class: owner_ai}
+
+  s3_be: "Backend Engineer\n────────────────\n• pytest unit tests\n  (validation, scheduler)\n• 3 sample trace records\n• Evaluation cases JSON\n• Final Docker\n  compose polish" {class: owner_backend}
+
+  s3_all: "All Team\n────────────────\n• README draft:\n  architecture diagram\n  setup instructions\n  sample curl commands\n  assumptions / limitations\n• AI-usage disclosure\n• Team contribution\n  statement" {class: owner_all}
+
+  s3_ml4: "MILESTONE M4\nEval report done\nREADME complete\n60%+ test coverage" {class: milestone}
+
+  s3_ai -> s3_ml4
+  s3_be -> s3_ml4
+  s3_all -> s3_ml4
+}
+
+# ─── SPRINT 4 ─────────────────────────────────────────────
+
+s4: "SPRINT 4\nDemo Prep & Final\n[Hour 7 → 8]" {
+  class: sprint4
+
+  s4_dryrun: "Full Dry Run\n────────────────\n• docker compose up\n  (clean machine)\n• Load CSV data\n• Run validation\n• POST /analyze (all)\n• Show schedule\n• Trigger replan\n• Show trace\n• Verify all\n  deliverables" {class: owner_all}
+
+  s4_prep: "Demo Prep\n────────────────\n• Each member prepares\n  to defend their\n  own component\n• Q&A rehearsal\n• Problem framing\n  talking points\n• Trade-off explanations" {class: owner_all}
+
+  s4_final: "Git Final\n────────────────\n• Tag: 'final'\n• Push all branches\n• Verify tag visible\n• Sign declarations\n• Submit repo URL" {class: owner_all}
+
+  s4_ml5: "MILESTONE M5\nFINAL SUBMISSION\nTagged + Submitted" {class: milestone}
+
+  s4_dryrun -> s4_prep
+  s4_prep -> s4_final
+  s4_final -> s4_ml5
+}
+
+# ─── TIMELINE CHAIN ──────────────────────────────────────
+
+prep -> s0: "Day of hackathon\nbegins" {style.stroke: "#64748b"; style.stroke-width: 2}
+s0 -> s1: "Hour 1\nFoundation ready" {style.stroke: "#3b82f6"; style.stroke-width: 2}
+s1 -> s2: "Hour 3\nAI core working" {style.stroke: "#8b5cf6"; style.stroke-width: 2}
+s2 -> s3: "Hour 5\nScheduling + UI live" {style.stroke: "#10b981"; style.stroke-width: 2}
+s3 -> s4: "Hour 7\nEval + docs done" {style.stroke: "#f97316"; style.stroke-width: 2}

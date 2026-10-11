@@ -1,0 +1,169 @@
+
+# =========================================================
+# API ENDPOINT MAP — Wind Fleet Health & Maintenance Optimizer
+# Paste into https://play.d2lang.com  or  d2 02_API_Endpoint_Map.d2 api.svg
+# =========================================================
+
+direction: right
+
+# ─── STYLES ───────────────────────────────────────────────
+classes: {
+  client: {
+    style: {
+      fill: "#0f172a"
+      stroke: "#38bdf8"
+      stroke-width: 2
+      font-color: "#f8fafc"
+      border-radius: 10
+    }
+  }
+  router: {
+    style: {
+      fill: "#1e3a5f"
+      stroke: "#38bdf8"
+      stroke-width: 2
+      font-color: "#ffffff"
+      bold: true
+      border-radius: 6
+    }
+  }
+  post_endpoint: {
+    style: {
+      fill: "#064e3b"
+      stroke: "#34d399"
+      stroke-width: 2
+      font-color: "#d1fae5"
+      border-radius: 6
+    }
+  }
+  get_endpoint: {
+    style: {
+      fill: "#1e3a5f"
+      stroke: "#60a5fa"
+      stroke-width: 2
+      font-color: "#dbeafe"
+      border-radius: 6
+    }
+  }
+  service: {
+    style: {
+      fill: "#2e1065"
+      stroke: "#a78bfa"
+      stroke-width: 2
+      font-color: "#ede9fe"
+      border-radius: 8
+    }
+  }
+  db: {
+    style: {
+      fill: "#1c1917"
+      stroke: "#fb923c"
+      stroke-width: 2
+      font-color: "#fed7aa"
+      border-radius: 8
+    }
+  }
+}
+
+# ─── CLIENTS ──────────────────────────────────────────────
+
+react_dashboard: "React Dashboard\n(Port 3000)" {
+  class: client
+}
+
+judge_curl: "Judge / Evaluator\n(curl / HTTP Client)" {
+  class: client
+}
+
+data_admin: "Data Admin\n(CLI / curl)" {
+  class: client
+}
+
+# ─── FASTAPI ROUTER ───────────────────────────────────────
+
+api: "FastAPI Router\nlocalhost:8000" {
+  class: router
+}
+
+# ─── ENDPOINTS ────────────────────────────────────────────
+
+ep_analyze: {
+  class: post_endpoint
+  label: "POST /analyze\n─────────────────\nBody: turbine_ids | 'all'\n      include_schedule: bool\n      mock_llm: bool\n─────────────────\nReturns:\n  run_id, recommendations[],\n  service_plan{},\n  assumptions[], limitations[]"
+}
+
+ep_replan: {
+  class: post_endpoint
+  label: "POST /replan\n─────────────────\nBody: (none — uses loaded data)\n─────────────────\nReturns:\n  updated_plan{},\n  diff[], changed_windows[]"
+}
+
+ep_load: {
+  class: post_endpoint
+  label: "POST /load\n─────────────────\nBody: multipart/form-data\n      file: CSV\n      file_type: scada|alarms|\n                 forecast|crew\n─────────────────\nReturns:\n  validation_results{},\n  rows_loaded: int"
+}
+
+ep_trace: {
+  class: get_endpoint
+  label: "GET /trace/{run_id}\n─────────────────\nPath: run_id (uuid)\n─────────────────\nReturns:\n  run_id, query,\n  model_used,\n  steps[] (tool calls + LLM),\n  final_answer{},\n  created_at"
+}
+
+ep_health: {
+  class: get_endpoint
+  label: "GET /health\n─────────────────\nReturns:\n  status: ok|degraded\n  db: connected|error\n  llm: available|mock\n  last_load: timestamp"
+}
+
+ep_plan: {
+  class: get_endpoint
+  label: "GET /plan\n─────────────────\nReturns:\n  plan_id, created_at,\n  windows[],\n  assumptions[], limitations[]"
+}
+
+# ─── BACKEND SERVICES ─────────────────────────────────────
+
+ai_service: "AI / Analytics Service\n─────────────────────\n• Feature Engineering\n• ML Anomaly Detector\n• Rule Classifier\n  (curtailment/icing/wake)\n• LLM Reasoning Engine\n• Trace Logger" {
+  class: service
+}
+
+sched_service: "Maintenance Scheduler\n─────────────────────\n• Constraint Solver\n• Annex A Policy Engine\n• Late-data Diff Generator" {
+  class: service
+}
+
+validation_service: "Validation Engine\n─────────────────────\n• 8 pre-analysis checks\n• Edge case detector\n• Schema validator" {
+  class: service
+}
+
+# ─── DATABASE ─────────────────────────────────────────────
+
+postgres: "PostgreSQL\n(Port 5432 internal)\n─────────────────────\nDomain Tables:\n  turbines, scada_records\n  alarms, forecast\n  crew_calendar\nAI Tables:\n  trace_records\n  fault_assessments\n  service_plans\n  maintenance_windows" {
+  class: db
+}
+
+# ─── CONNECTIONS: CLIENTS → API ───────────────────────────
+
+react_dashboard -> api: "HTTP/JSON" {style.stroke: "#38bdf8"}
+judge_curl -> api: "HTTP/JSON" {style.stroke: "#38bdf8"}
+data_admin -> api: "multipart / CLI" {style.stroke: "#38bdf8"}
+
+# ─── API → ENDPOINTS ──────────────────────────────────────
+
+api -> ep_analyze {style.stroke: "#34d399"}
+api -> ep_replan {style.stroke: "#34d399"}
+api -> ep_load {style.stroke: "#34d399"}
+api -> ep_trace {style.stroke: "#60a5fa"}
+api -> ep_health {style.stroke: "#60a5fa"}
+api -> ep_plan {style.stroke: "#60a5fa"}
+
+# ─── ENDPOINTS → SERVICES ────────────────────────────────
+
+ep_analyze -> ai_service: "trigger analysis" {style.stroke: "#a78bfa"}
+ep_analyze -> sched_service: "trigger scheduling\n(if include_schedule)" {style.stroke: "#a78bfa"}
+ep_replan -> sched_service: "re-run scheduler" {style.stroke: "#a78bfa"}
+ep_load -> validation_service: "validate + persist" {style.stroke: "#a78bfa"}
+
+# ─── SERVICES ↔ DB ────────────────────────────────────────
+
+ai_service -> postgres: "read SCADA, alarms\nwrite assessments, traces" {style.stroke: "#fb923c"}
+sched_service -> postgres: "read forecast, crew\nwrite service_plans, windows" {style.stroke: "#fb923c"}
+validation_service -> postgres: "write validated data" {style.stroke: "#fb923c"}
+ep_trace -> postgres: "read trace_records" {style.stroke: "#fb923c"}
+ep_plan -> postgres: "read service_plans" {style.stroke: "#fb923c"}
+ep_health -> postgres: "ping connection" {style.stroke: "#fb923c"}

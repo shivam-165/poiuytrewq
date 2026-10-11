@@ -1,0 +1,223 @@
+
+# =========================================================
+# ER DIAGRAM — Wind Fleet Health & Maintenance Optimizer
+# Paste into https://play.d2lang.com  or  d2 01_ER_Diagram.d2 er.svg
+# =========================================================
+
+direction: right
+
+# ─── STYLES ───────────────────────────────────────────────
+classes: {
+  domain: {
+    style: {
+      fill: "#1e293b"
+      stroke: "#3b82f6"
+      stroke-width: 2
+      font-color: "#f1f5f9"
+      border-radius: 8
+    }
+  }
+  ai_output: {
+    style: {
+      fill: "#1e1b4b"
+      stroke: "#8b5cf6"
+      stroke-width: 2
+      font-color: "#f1f5f9"
+      border-radius: 8
+    }
+  }
+  header_domain: {
+    style: {
+      fill: "#1d4ed8"
+      font-color: "#ffffff"
+      bold: true
+    }
+  }
+  header_ai: {
+    style: {
+      fill: "#6d28d9"
+      font-color: "#ffffff"
+      bold: true
+    }
+  }
+}
+
+# ─── DOMAIN TABLES ────────────────────────────────────────
+
+turbines: {
+  class: domain
+  shape: sql_table
+  turbine_id: varchar(10) {constraint: primary_key}
+  location_x: float
+  location_y: float
+  rated_power_kw: float
+  hub_height_m: float
+  status: varchar(20)
+}
+
+scada_records: {
+  class: domain
+  shape: sql_table
+  id: bigserial {constraint: primary_key}
+  turbine_id: varchar(10) {constraint: foreign_key}
+  timestamp: timestamptz
+  wind_speed_ms: float
+  power_kw: float
+  rotor_rpm: float
+  gearbox_temp_c: float
+  generator_temp_c: float
+}
+
+alarms: {
+  class: domain
+  shape: sql_table
+  alarm_id: varchar(20) {constraint: primary_key}
+  turbine_id: varchar(10) {constraint: foreign_key}
+  start_time: timestamptz
+  end_time: timestamptz
+  alarm_code: varchar(30)
+  severity: varchar(10)
+}
+
+forecast: {
+  class: domain
+  shape: sql_table
+  forecast_id: bigserial {constraint: primary_key}
+  timestamp: timestamptz
+  wind_speed_ms: float
+  temperature_c: float
+  precipitation_mm: float
+  is_storm_window: boolean
+  version: integer
+}
+
+crew_calendar: {
+  class: domain
+  shape: sql_table
+  entry_id: bigserial {constraint: primary_key}
+  crew_id: varchar(20)
+  date: date
+  is_available: boolean
+  crane_available: boolean
+}
+
+# ─── AI OUTPUT TABLES ─────────────────────────────────────
+
+trace_records: {
+  class: ai_output
+  shape: sql_table
+  run_id: uuid {constraint: primary_key}
+  query: text
+  steps: jsonb
+  final_answer: jsonb
+  model_used: varchar(50)
+  created_at: timestamptz
+}
+
+fault_assessments: {
+  class: ai_output
+  shape: sql_table
+  assessment_id: uuid {constraint: primary_key}
+  run_id: uuid {constraint: foreign_key}
+  turbine_id: varchar(10) {constraint: foreign_key}
+  fault_type: varchar(30)
+  confidence: float
+  severity: varchar(10)
+  evidence_refs: jsonb
+  requires_approval: boolean
+  created_at: timestamptz
+}
+
+service_plans: {
+  class: ai_output
+  shape: sql_table
+  plan_id: uuid {constraint: primary_key}
+  run_id: uuid {constraint: foreign_key}
+  created_at: timestamptz
+  version: integer
+  assumptions: jsonb
+  limitations: jsonb
+}
+
+maintenance_windows: {
+  class: ai_output
+  shape: sql_table
+  window_id: uuid {constraint: primary_key}
+  plan_id: uuid {constraint: foreign_key}
+  turbine_id: varchar(10) {constraint: foreign_key}
+  planned_date: date
+  crew_id: varchar(20)
+  crane_required: boolean
+  estimated_duration_hrs: float
+  justification: text
+  priority_rank: integer
+}
+
+evaluation_cases: {
+  class: ai_output
+  shape: sql_table
+  case_id: uuid {constraint: primary_key}
+  input: jsonb
+  expected_output: jsonb
+  actual_output: jsonb
+  score: float
+  method: varchar(30)
+  config_label: varchar(50)
+  created_at: timestamptz
+}
+
+# ─── RELATIONSHIPS ────────────────────────────────────────
+
+turbines -> scada_records: "1 turbine\nhas many records" {
+  style.stroke: "#3b82f6"
+  style.stroke-width: 2
+  target-arrowhead: {shape: arrow}
+}
+
+turbines -> alarms: "1 turbine\nhas many alarms" {
+  style.stroke: "#3b82f6"
+  style.stroke-width: 2
+  target-arrowhead: {shape: arrow}
+}
+
+turbines -> fault_assessments: "1 turbine\nhas many assessments" {
+  style.stroke: "#8b5cf6"
+  style.stroke-dash: 4
+  target-arrowhead: {shape: arrow}
+}
+
+turbines -> maintenance_windows: "1 turbine\nhas many windows" {
+  style.stroke: "#8b5cf6"
+  style.stroke-dash: 4
+  target-arrowhead: {shape: arrow}
+}
+
+trace_records -> fault_assessments: "1 run\nproduces assessments" {
+  style.stroke: "#a78bfa"
+  style.stroke-width: 2
+  target-arrowhead: {shape: arrow}
+}
+
+trace_records -> service_plans: "1 run\ncreates 1 plan" {
+  style.stroke: "#a78bfa"
+  style.stroke-width: 2
+  target-arrowhead: {shape: arrow}
+}
+
+service_plans -> maintenance_windows: "1 plan\nhas many windows" {
+  style.stroke: "#a78bfa"
+  style.stroke-width: 2
+  target-arrowhead: {shape: arrow}
+}
+
+forecast -> service_plans: "forecast\ninforms plan" {
+  style.stroke: "#06b6d4"
+  style.stroke-dash: 4
+  target-arrowhead: {shape: arrow}
+}
+
+crew_calendar -> maintenance_windows: "crew availability\nconstrained by calendar" {
+  style.stroke: "#06b6d4"
+  style.stroke-dash: 4
+  target-arrowhead: {shape: arrow}
+}

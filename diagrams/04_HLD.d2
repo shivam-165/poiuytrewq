@@ -1,0 +1,186 @@
+
+# =========================================================
+# HIGH-LEVEL DESIGN (HLD) — Wind Fleet Health & Maintenance Optimizer
+# Paste into https://play.d2lang.com  or  d2 04_HLD.d2 hld.svg
+# =========================================================
+
+direction: down
+
+# ─── STYLES ───────────────────────────────────────────────
+classes: {
+  layer_title: {
+    style: {
+      fill: "#0f172a"
+      stroke: "#334155"
+      font-color: "#94a3b8"
+      bold: true
+      font-size: 14
+    }
+  }
+  external_source: {
+    style: {
+      fill: "#172554"
+      stroke: "#3b82f6"
+      stroke-width: 2
+      font-color: "#bfdbfe"
+      border-radius: 6
+    }
+  }
+  data_layer: {
+    style: {
+      fill: "#1c1917"
+      stroke: "#f97316"
+      stroke-width: 2
+      font-color: "#fed7aa"
+      border-radius: 8
+    }
+  }
+  ai_layer: {
+    style: {
+      fill: "#1e1b4b"
+      stroke: "#8b5cf6"
+      stroke-width: 2
+      font-color: "#ede9fe"
+      border-radius: 8
+    }
+  }
+  api_layer: {
+    style: {
+      fill: "#064e3b"
+      stroke: "#10b981"
+      stroke-width: 2
+      font-color: "#d1fae5"
+      border-radius: 8
+    }
+  }
+  ui_layer: {
+    style: {
+      fill: "#0c4a6e"
+      stroke: "#38bdf8"
+      stroke-width: 2
+      font-color: "#e0f2fe"
+      border-radius: 8
+    }
+  }
+  infra_layer: {
+    style: {
+      fill: "#1f2937"
+      stroke: "#4b5563"
+      stroke-width: 1
+      font-color: "#9ca3af"
+      border-radius: 4
+    }
+  }
+}
+
+# ─── EXTERNAL LAYER ───────────────────────────────────────
+
+ext: "EXTERNAL DATA SOURCES" {
+  class: layer_title
+  direction: right
+
+  scada_csv: "scada_10min.csv\n25 turbines × 10-min\nfor 4+ months" {class: external_source}
+  alarms_csv: "alarms.csv\nFault events\nwith severity codes" {class: external_source}
+  forecast_csv: "forecast.csv\n30-day weather\nStorm window flags" {class: external_source}
+  crew_csv: "crew_calendar.csv\nCrew + crane\navailability" {class: external_source}
+  late_data: "LATE DATA DROP\n(updated forecast\n+ crane change)" {
+    style: {
+      fill: "#7c2d12"
+      stroke: "#ef4444"
+      stroke-width: 3
+      font-color: "#fee2e2"
+      border-radius: 6
+    }
+  }
+}
+
+# ─── LAYER 1: DATA ────────────────────────────────────────
+
+layer1: "LAYER 1 — DATA LAYER" {
+  class: layer_title
+  direction: right
+
+  loader: "Data Loader\n(CLI + POST /load)\n• Accepts CSV\n• Schema validation\n• Multipart upload" {class: data_layer}
+
+  validator: "Validation Engine\n• 8 rule checks\n• Edge case flags:\n  curtailment, icing\n  wake, stuck sensor\n  outage gaps" {class: data_layer}
+
+  postgres: "PostgreSQL\n(Docker Container)\n────────────────\nDomain:\n  turbines, scada_records\n  alarms, forecast\n  crew_calendar\nAI Output:\n  trace_records\n  fault_assessments\n  service_plans\n  maintenance_windows" {class: data_layer}
+}
+
+# ─── LAYER 2: AI / ANALYTICS ──────────────────────────────
+
+layer2: "LAYER 2 — AI / ANALYTICS LAYER" {
+  class: layer_title
+  direction: right
+
+  feature_eng: "Feature Engineering\n────────────────\n• Rolling mean/std\n  (1h window, 24h window)\n• Power curve deviation\n• Temperature delta peers\n• Peer normalisation" {class: ai_layer}
+
+  ml_detector: "ML Anomaly Detector\n(scikit-learn)\n────────────────\n• Isolation Forest\n• Z-score threshold\n• Anomaly score 0–1\n  per turbine" {class: ai_layer}
+
+  rule_classifier: "Rule-Based Classifier\n────────────────\n• Curtailment detection\n  (low power + low wind)\n• Icing (low power,\n  temp ≈ 0°C, no alarm)\n• Wake effect\n  (spatial correlation)\n• Stuck sensor\n  (zero variance 6h)" {class: ai_layer}
+
+  llm_engine: "LLM Reasoning Engine\n(LangChain + LLM)\n────────────────\nTools:\n  get_scada_summary()\n  get_fault_score()\n  get_alarm_history()\n  get_weather_forecast()\n  get_crew_availability()\nOutput:\n  Structured JSON via\n  Pydantic validation" {class: ai_layer}
+
+  trace_logger: "Trace Logger\n────────────────\n• Records every tool call\n• Records every LLM call\n• Stores run_id → steps[]\n• Accessible via\n  GET /trace/{run_id}" {class: ai_layer}
+
+  scheduler: "Maintenance Scheduler\n────────────────\n• Constraint solver\n  (crew, crane, storm)\n• Annex A policy engine\n• Priority ranking\n• Late-data diff gen\n• Re-plan on demand" {class: ai_layer}
+}
+
+# ─── LAYER 3: API ─────────────────────────────────────────
+
+layer3: "LAYER 3 — API LAYER (FastAPI)" {
+  class: layer_title
+  direction: right
+
+  ep1: "POST /analyze\n(core endpoint)" {class: api_layer}
+  ep2: "POST /replan\n(late data trigger)" {class: api_layer}
+  ep3: "POST /load\n(data ingestion)" {class: api_layer}
+  ep4: "GET /trace/{run_id}\n(audit trail)" {class: api_layer}
+  ep5: "GET /health\n(system status)" {class: api_layer}
+  ep6: "GET /plan\n(current schedule)" {class: api_layer}
+}
+
+# ─── LAYER 4: PRESENTATION ───────────────────────────────
+
+layer4: "LAYER 4 — PRESENTATION LAYER (React)" {
+  class: layer_title
+  direction: right
+
+  fleet_map: "Fleet Health Grid\n25 turbines\nColor-coded status:\n  Green / Amber / Red\n  Blue (environmental)" {class: ui_layer}
+  detail_view: "Turbine Detail Panel\nClassification + confidence\nEvidence references\nLLM rationale" {class: ui_layer}
+  calendar_view: "Maintenance Calendar\nGantt / calendar view\nCrew assignments\nPlanned dates" {class: ui_layer}
+  replan_ui: "Re-Plan View\nTrigger re-plan button\nDiff highlighting\nChange explanation" {class: ui_layer}
+  validation_ui: "Validation Panel\nScript output\nPass/fail per check\nEdge case flags" {class: ui_layer}
+}
+
+# ─── INFRASTRUCTURE ──────────────────────────────────────
+
+infra: "INFRASTRUCTURE (Docker Compose)" {
+  class: layer_title
+  direction: right
+
+  container_api: "api container\nFastAPI + uvicorn\nPort 8000" {class: infra_layer}
+  container_db: "db container\nPostgreSQL 15\nPort 5432 (internal)" {class: infra_layer}
+  container_fe: "frontend container\nReact + nginx\nPort 3000" {class: infra_layer}
+  container_ollama: "ollama container\n(optional)\nOllama LLM\nPort 11434" {class: infra_layer}
+  dot_env: ".env file\nAPI_KEY, DB_URL\nMOCK_LLM=true\nLLM_PROVIDER" {
+    style: {
+      fill: "#422006"
+      stroke: "#d97706"
+      stroke-width: 1
+      font-color: "#fef3c7"
+      border-radius: 4
+    }
+  }
+}
+
+# ─── CONNECTIONS BETWEEN LAYERS ───────────────────────────
+
+ext -> layer1: "File upload / CLI load" {style.stroke: "#3b82f6"; style.stroke-width: 2}
+layer1 -> layer2: "Validated + persisted data\navailable for analysis" {style.stroke: "#f97316"; style.stroke-width: 2}
+layer2 -> layer3: "Analysis results\n→ format as API response" {style.stroke: "#8b5cf6"; style.stroke-width: 2}
+layer3 -> layer4: "REST / JSON\n→ rendered in browser" {style.stroke: "#10b981"; style.stroke-width: 2}
+layer4 -> layer3: "User actions\n(POST /analyze, /replan)" {style.stroke: "#38bdf8"; style.stroke-width: 1; style.stroke-dash: 4}
+infra -> layer1: "Hosts DB container" {style.stroke: "#4b5563"; style.stroke-dash: 4}
+infra -> layer3: "Hosts API container" {style.stroke: "#4b5563"; style.stroke-dash: 4}
+infra -> layer4: "Hosts frontend container" {style.stroke: "#4b5563"; style.stroke-dash: 4}

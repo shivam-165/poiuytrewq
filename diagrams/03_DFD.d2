@@ -1,0 +1,192 @@
+
+# =========================================================
+# DATA FLOW DIAGRAM (DFD) — Wind Fleet Health & Maintenance Optimizer
+# Paste into https://play.d2lang.com  or  d2 03_DFD.d2 dfd.svg
+# =========================================================
+
+direction: down
+
+# ─── STYLES ───────────────────────────────────────────────
+classes: {
+  external: {
+    style: {
+      fill: "#0c1445"
+      stroke: "#60a5fa"
+      stroke-width: 2
+      font-color: "#bfdbfe"
+      border-radius: 4
+      bold: true
+    }
+  }
+  process: {
+    style: {
+      fill: "#1e293b"
+      stroke: "#34d399"
+      stroke-width: 2
+      font-color: "#d1fae5"
+      border-radius: 12
+    }
+  }
+  store: {
+    style: {
+      fill: "#1c1917"
+      stroke: "#f97316"
+      stroke-width: 2
+      font-color: "#fed7aa"
+      border-radius: 0
+    }
+  }
+  decision: {
+    style: {
+      fill: "#312e81"
+      stroke: "#a78bfa"
+      stroke-width: 2
+      font-color: "#ede9fe"
+      border-radius: 50
+    }
+  }
+  output: {
+    style: {
+      fill: "#064e3b"
+      stroke: "#10b981"
+      stroke-width: 2
+      font-color: "#d1fae5"
+      border-radius: 8
+    }
+  }
+}
+
+# ─── LEVEL 0: EXTERNAL ENTITIES ───────────────────────────
+
+csv_files: "CSV Data Files\n(scada_10min | alarms\n forecast | crew_calendar)" {
+  class: external
+}
+
+late_drop: "Late Data Drop\n(Updated forecast\n+ crane changes)" {
+  class: external
+}
+
+operator: "Wind Farm Operator\n(Dashboard User)" {
+  class: external
+}
+
+judge: "Judge / Evaluator\n(API Client)" {
+  class: external
+}
+
+# ─── LEVEL 1: INGESTION & VALIDATION ──────────────────────
+
+p1: "P1: Data Loader\n& Validator\n────────────────\n• Schema check\n• 8 validation rules\n• Edge case detector" {
+  class: process
+}
+
+ds_raw: "DS1: Raw Data Store\n(PostgreSQL)\nturbines | scada_records\nalarms | forecast\ncrew_calendar" {
+  class: store
+}
+
+# ─── LEVEL 2: FEATURE ENGINEERING ─────────────────────────
+
+p2: "P2: Feature Engineering\n────────────────\n• Rolling mean/std (1h, 24h)\n• Power curve deviation\n• Peer comparison\n• Temperature deltas" {
+  class: process
+}
+
+ds_features: "DS2: Feature Cache\n(In-memory / Redis)\nFeature vectors per turbine" {
+  class: store
+}
+
+# ─── LEVEL 3: ANOMALY DETECTION ───────────────────────────
+
+p3: "P3: ML Anomaly Detector\n────────────────\n• Isolation Forest scoring\n• Z-score analysis\n• Anomaly score per turbine\n  (0.0 – 1.0)" {
+  class: process
+}
+
+# ─── LEVEL 4: FAULT CLASSIFICATION ────────────────────────
+
+p4: "P4: Fault Classifier\n────────────────\n• Rule: Curtailment check\n• Rule: Icing detection\n• Rule: Wake effect analysis\n• Rule: Stuck sensor (variance)\n• ML: fault_type classification" {
+  class: process
+}
+
+d1: "Fault or\nEnvironmental?" {
+  class: decision
+}
+
+# ─── LEVEL 5: LLM REASONING ───────────────────────────────
+
+p5: "P5: LLM Reasoning Engine\n(LangChain + chosen LLM)\n────────────────\nTools called:\n  get_scada_summary()\n  get_fault_score()\n  get_alarm_history()\nOutputs:\n  action, rationale\n  evidence_refs\n  confidence\n  requires_approval" {
+  class: process
+}
+
+ds_traces: "DS3: Trace Records\n(PostgreSQL)\ntrace_records table\nrun_id → steps[]" {
+  class: store
+}
+
+ds_assessments: "DS4: Fault Assessments\n(PostgreSQL)\nfault_assessments table" {
+  class: store
+}
+
+# ─── LEVEL 6: MAINTENANCE SCHEDULING ─────────────────────
+
+p6: "P6: Maintenance Scheduler\n────────────────\n• Load crew_calendar\n• Load forecast (storm windows)\n• Greedy constraint solver\n• Annex A policy enforcement\n• Priority ranking by severity" {
+  class: process
+}
+
+ds_plans: "DS5: Service Plans\n(PostgreSQL)\nservice_plans\nmaintenance_windows" {
+  class: store
+}
+
+# ─── LEVEL 7: RE-PLAN TRIGGER ────────────────────────────
+
+p7: "P7: Late Data Re-planner\n────────────────\n• Detect forecast version change\n• Detect crane unavailability\n• Re-run scheduler\n• Generate plan diff\n• Explain changed windows" {
+  class: process
+}
+
+# ─── LEVEL 8: OUTPUTS ─────────────────────────────────────
+
+out_api: "API Response\n────────────────\nPOST /analyze response:\n  recommendations[]\n  service_plan{}\n  assumptions[]\n  limitations[]" {
+  class: output
+}
+
+out_ui: "React Dashboard\n────────────────\n• Fleet health grid (25 turbines)\n• Maintenance calendar\n• Turbine detail + evidence\n• Re-plan diff view\n• Validation output panel" {
+  class: output
+}
+
+out_eval: "Evaluation Report\n────────────────\n• 20+ test cases scored\n• Config A vs Config B\n• Accuracy metrics\n• Failure mode analysis" {
+  class: output
+}
+
+# ─── EVALUATION PIPELINE ─────────────────────────────────
+
+p8: "P8: Evaluation Framework\n────────────────\n• Load eval_cases.json (20+)\n• Run system on each case\n• Compare actual vs expected\n• Score: exact / rubric / LLM-judge\n• Config comparison" {
+  class: process
+}
+
+# ─── DATA FLOWS ───────────────────────────────────────────
+
+csv_files -> p1: "CSV upload\n(multipart/form-data\nor CLI path)" {style.stroke: "#60a5fa"}
+late_drop -> p1: "Updated CSV\n(forecast v2 / crew)" {style.stroke: "#f97316"; style.stroke-dash: 4}
+p1 -> ds_raw: "Validated rows\n→ INSERT" {style.stroke: "#f97316"}
+p1 -> p2: "Clean dataset\n(validation passed)" {style.stroke: "#34d399"}
+ds_raw -> p2: "Query SCADA\n(all turbines)" {style.stroke: "#f97316"}
+p2 -> ds_features: "Feature vectors\ncached" {style.stroke: "#34d399"}
+ds_features -> p3: "Feature vectors" {style.stroke: "#34d399"}
+p3 -> p4: "Anomaly scores\nper turbine" {style.stroke: "#34d399"}
+p4 -> d1: "Classified signal" {style.stroke: "#a78bfa"}
+d1 -> p5: "fault_suspected\nor degraded" {style.stroke: "#a78bfa"; label.near: source-left}
+d1 -> p6: "healthy / curtailed\n/ icing / wake\n→ skip LLM\n→ schedule skipped" {style.stroke: "#6ee7b7"; label.near: source-right}
+ds_raw -> p5: "Alarm history\nSCADA context" {style.stroke: "#f97316"}
+p5 -> ds_traces: "Write trace\nsteps[]" {style.stroke: "#a78bfa"}
+p5 -> ds_assessments: "Write fault\nassessment" {style.stroke: "#a78bfa"}
+ds_assessments -> p6: "Fault severity\nand turbine list" {style.stroke: "#f97316"}
+ds_raw -> p6: "Forecast (storm windows)\nCrew calendar" {style.stroke: "#f97316"}
+p6 -> ds_plans: "Write service_plans\nmaintenance_windows" {style.stroke: "#10b981"}
+late_drop -> p7: "Late data event\n(version change)" {style.stroke: "#f97316"; style.stroke-dash: 4}
+ds_raw -> p7: "New forecast\nnew crew data" {style.stroke: "#f97316"}
+p7 -> ds_plans: "Write updated plan\n+ diff record" {style.stroke: "#10b981"}
+ds_plans -> out_api: "Return plan\nin response" {style.stroke: "#10b981"}
+ds_assessments -> out_api: "Return recommendations\nin response" {style.stroke: "#10b981"}
+ds_traces -> out_api: "GET /trace/{run_id}" {style.stroke: "#10b981"}
+out_api -> operator: "JSON response\nvia REST" {style.stroke: "#60a5fa"}
+out_api -> judge: "JSON response\nvia REST" {style.stroke: "#60a5fa"}
+out_api -> out_ui: "Rendered in\nReact dashboard" {style.stroke: "#38bdf8"}
+p8 -> out_eval: "Evaluation report\n(accuracy + config diff)" {style.stroke: "#f59e0b"}
+ds_assessments -> p8: "Actual outputs\nfor eval cases" {style.stroke: "#f59e0b"}
