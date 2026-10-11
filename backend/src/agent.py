@@ -6,6 +6,8 @@ from src.classifier import diagnose_turbine, get_fleet_diagnosis
 from src.solver import solve_maintenance_windows
 from src.database import get_connection
 from src.models.schemas import AnalyzeRequest, AnalyzeResponse, Recommendation, ServiceWindow, TurbineFinding
+from src.ai.langgraph_workflow import run_langgraph_analysis
+
 
 def process_analyze_query(req: AnalyzeRequest) -> AnalyzeResponse:
     run_id = f"wf-{uuid.uuid4().hex[:6]}"
@@ -143,35 +145,10 @@ def process_analyze_query(req: AnalyzeRequest) -> AnalyzeResponse:
         save_trace(run_id, req.question or "", steps, llm_calls, tokens_used, "pending", resp.model_dump())
         return resp
 
-    # 4. Fleet-Wide Plan Generation (answer_type = "plan")
-    steps.append({
-        "agent": "analyst",
-        "tool": "expected_power_gap",
-        "output": {"T-07": -0.091, "T-12": -0.072, "T-19": -0.120, "T-05": -0.140, "T-03": -0.450}
-    })
-    steps.append({
-        "agent": "analyst",
-        "tool": "check_curtailment_icing_wake",
-        "output": {
-            "T-05": "wake_affected",
-            "T-03": "curtailed",
-            "T-18": "curtailed",
-            "T-22": "icing",
-            "T-14": "sensor_stuck",
-            "T-07": "gearbox_fault_developing",
-            "T-12": "generator_bearing_wear",
-            "T-19": "pitch_actuator_fault"
-        }
-    })
-
+    # 4. Fleet-Wide Plan Generation via LangGraph (answer_type = "plan")
+    lg_out = run_langgraph_analysis(req.question or "Plan service for riskiest turbines", target_tid, req.horizon_days or 30)
+    steps = lg_out.get("steps", [])
     solver_res = solve_maintenance_windows(["T-07", "T-12", "T-19"])
-    steps.append({
-        "agent": "scheduler",
-        "tool": "solve_service_windows",
-        "input": {"turbines": ["T-07", "T-12", "T-19"]},
-        "output": {"windows_generated": len(solver_res["windows"]), "solver": solver_res["solver_used"]}
-    })
-    steps.append({"agent": "reporter", "tool": "write_weekly_plan"})
 
     findings = [
         TurbineFinding(

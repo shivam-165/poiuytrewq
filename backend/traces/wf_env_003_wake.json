@@ -1,0 +1,48 @@
+{
+  "run_id": "wf-env-003",
+  "question": "Is T-05 underperforming due to mechanical failure or wake?",
+  "steps": [
+    {
+      "agent": "analyst",
+      "tool": "expected_power_gap",
+      "input": {"turbine_id": "T-05"},
+      "output": {
+        "overall_power_deficit_pct": -12.4,
+        "westerly_wind_deficit_pct": -24.1,
+        "non_westerly_deficit_pct": -0.8,
+        "gearbox_temp_excess_c": 0.2,
+        "vibration_mm_s": 1.34
+      }
+    },
+    {
+      "agent": "classifier",
+      "tool": "check_curtailment_icing_wake",
+      "input": {"turbine_id": "T-05"},
+      "output": {
+        "rule_applied": "Annex A Rule 2 (Wake Check)",
+        "upstream_neighbour": "T-04",
+        "wake_sector_degrees": "250.0 to 290.0",
+        "verdict": "wake_affected",
+        "answer_type": "not_a_fault",
+        "downtime_risk_30d": 0.03,
+        "evidence_refs": [
+          "scada_10min:T-05:wake_sector_250_290deg_downwind_of_T-04"
+        ]
+      }
+    },
+    {
+      "agent": "reporter",
+      "tool": "write_environmental_exemption_brief",
+      "output": {
+        "recommend_service": false,
+        "action": "none_environmental_exemption",
+        "justification": "Aerodynamic wake behind T-04 explains deficit exclusively in westerly winds. Machine is mechanically sound."
+      }
+    }
+  ],
+  "llm_calls": 1,
+  "tokens": 1420,
+  "approval_status": "none_required",
+  "model_used": "gemini-3.5-flash-lite (deterministic grounded)",
+  "created_at": "2026-10-11T10:30:00Z"
+}

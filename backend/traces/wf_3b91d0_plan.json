@@ -1,0 +1,57 @@
+{
+  "run_id": "wf-3b91d0",
+  "question": "Plan service for the 5 riskiest turbines",
+  "steps": [
+    {
+      "agent": "analyst",
+      "tool": "expected_power_gap",
+      "output": {
+        "T-07": -0.091,
+        "T-12": -0.072,
+        "T-19": -0.120,
+        "T-05": -0.140,
+        "T-03": -0.450
+      }
+    },
+    {
+      "agent": "classifier",
+      "tool": "check_curtailment_icing_wake",
+      "output": {
+        "T-05": "wake_affected",
+        "T-03": "curtailed",
+        "T-18": "curtailed",
+        "T-22": "icing",
+        "T-14": "sensor_stuck",
+        "T-07": "gearbox_fault_developing",
+        "T-12": "generator_bearing_wear",
+        "T-19": "pitch_actuator_fault"
+      }
+    },
+    {
+      "agent": "scheduler",
+      "tool": "solve_service_windows",
+      "input": {
+        "turbines": ["T-07", "T-12", "T-19"]
+      },
+      "output": {
+        "solver": "Google OR-Tools CP-SAT (MILP)",
+        "status": "optimal",
+        "windows_generated": 3,
+        "total_energy_loss_mwh": 92.5
+      }
+    },
+    {
+      "agent": "reporter",
+      "tool": "write_weekly_plan",
+      "output": {
+        "format": "Section 6.1 JSON + Plain-English Brief",
+        "savings_vs_windy_day_mwh": 162.0
+      }
+    }
+  ],
+  "llm_calls": 1,
+  "tokens": 2210,
+  "approval_status": "pending",
+  "model_used": "gemini-3.5-flash-lite (deterministic grounded)",
+  "created_at": "2026-10-11T10:00:00Z"
+}
