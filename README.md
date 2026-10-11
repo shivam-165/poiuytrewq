@@ -178,6 +178,18 @@ curl -X POST http://localhost:8000/ingest \
 curl -X POST http://localhost:8000/validate
 ```
 
+### 6. CLI Tooling (Sections 4.5 & 4.7)
+```bash
+# Run data validation suite from terminal
+python backend/scripts/validate_data.py
+
+# Ingest judge CSV files into SQLite database
+python backend/scripts/load_data.py --file path/to/file.csv --table scada_10min
+
+# Run 20-case automated evaluation benchmark
+python backend/scripts/run_eval.py
+```
+
 ---
 
 ## 📊 Evaluation & Dual Configuration Comparison
@@ -192,7 +204,40 @@ curl -X POST http://localhost:8000/validate
 
 ---
 
+## ⚠️ Known Edge Cases Handled (Section 4.4)
+
+1. **Grid Curtailment (T-03, T-18)**: Active power clamped at fixed thresholds (1200 kW & 1500 kW) during high-wind intervals. Decoupled from mechanical degradation per Annex A Rule 1.
+2. **Aerodynamic Wake (T-05)**: Directional deficit occurring solely in 250°-290° sector behind upwind turbine T-04. Filtered per Annex A Rule 2 to prevent needless dispatches.
+3. **Blade Icing (T-22)**: Sub-zero ambient temperature (-0.8°C) causing aerodynamic drag without internal mechanical damage. Handled via de-icing protocol per Annex A Rule 3.
+4. **Frozen / Stuck Sensor (T-14)**: Temperature fixed at exactly 42.0°C across 48h with zero variance. Identified as sensor hardware failure; machine classified sound.
+5. **Comms Outage (T-09)**: 6-hour timestamp gap flagged without penalizing machine health score.
+6. **Storm Safety (Forecast Oct 14)**: Automated refusal when requests attempt to force crane lifts during >10 m/s gale winds.
+
+---
+
+## 👥 Team Contribution Statement (Section 8 & 9.4)
+
+| Member | Focus Area | Deliverables & Modules |
+|---|---|---|
+| **Member 1 (AI / ML Engineer)** | LangGraph Orchestration & Anomaly Models | `src/ai/langgraph_workflow.py`, `src/ai/ml_anomaly.py`, `src/ai/rag_policy.py`, `src/ai/llm_client.py` |
+| **Member 2 (Optimization & Backend)** | OR-Tools CP-SAT Solver & FastAPI Engine | `src/solver.py`, `src/validator.py`, `src/classifier.py`, `main.py`, `database.py` |
+| **Member 3 (Frontend & UX)** | React Operator Console & Vite Architecture | `FleetMatrixView.jsx`, `OptimizerView.jsx`, `QueryEngineView.jsx`, `DataIntegrityView.jsx`, `BenchmarkView.jsx` |
+| **Member 4 (QA, Evaluation & DevOps)** | Benchmark Suite, Docker & Documentation | `run_eval.py`, `test_api.py`, `DATA_CARD.md`, `EVALUATION_REPORT.md`, Dockerfiles, `docker-compose.yml` |
+
+---
+
+## ✍️ Signed Declaration of Original Work (Section 8)
+
+We hereby declare that:
+1. The code submitted in this repository represents the original work of this team for the HCLTech Future Ready AI Engineer Hackathon.
+2. AI coding assistants were utilized in accordance with Section 10 rules and are fully disclosed below. All mathematical formulas, optimization formulations, and code structures were independently verified, tested, and understood.
+3. No proprietary or real wind farm data was utilized; all data consists of verified synthetic sets documented in `DATA_CARD.md`.
+4. All team members understand the system architecture and are prepared for individual technical interviews.
+
+---
+
 ## 📝 Disclosures & Compliance
 
 * **AI Assistance Disclosure**: Architecture modeling, code templates, and test matrices were refined using Google Antigravity. All mathematical formulations (MILP constraints, IEC Class II power curves) and unit tests were validated and executed independently.
 * **Data Card**: Synthetic datasets adhere strictly to Annex B schemas and Annex D data card standards. No real proprietary wind farm data was utilized.
+
