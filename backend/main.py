@@ -6,6 +6,18 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 
+# Load environment variables
+for env_file in [".env", os.path.join(os.path.dirname(__file__), ".env"), os.path.join(os.path.dirname(__file__), "..", ".env")]:
+    if os.path.exists(env_file):
+        with open(env_file, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    if k.strip() not in os.environ:
+                        os.environ[k.strip()] = v.strip().strip('"').strip("'")
+        break
+
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse

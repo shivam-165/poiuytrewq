@@ -7,6 +7,7 @@ from src.solver import solve_maintenance_windows
 from src.database import get_connection
 from src.models.schemas import AnalyzeRequest, AnalyzeResponse, Recommendation, ServiceWindow, TurbineFinding
 from src.ai.langgraph_workflow import run_langgraph_analysis
+from src.ai.llm_client import llm_client
 
 
 def process_analyze_query(req: AnalyzeRequest) -> AnalyzeResponse:
@@ -190,10 +191,27 @@ def process_analyze_query(req: AnalyzeRequest) -> AnalyzeResponse:
         for w in solver_res["windows"]
     ]
 
+    summary_text = "T-07, T-12, and T-19 need service. Best windows are calm, low-price days optimized via Google OR-Tools CP-SAT."
+    if llm_client.is_live_available():
+        try:
+            live_out = llm_client.generate_grounded_response(
+                system_prompt="You are ZephyrPulse AI wind operations assistant. Provide a concise 1-2 sentence executive summary of the maintenance plan.",
+                user_prompt=req.question or "Plan service for riskiest turbines",
+                context_data={
+                    "turbines": ["T-07", "T-12", "T-19"],
+                    "windows_count": len(recs),
+                    "solver": solver_res.get("solver_used", "ortools_cpsat")
+                }
+            )
+            if live_out and isinstance(live_out, dict) and "summary" in live_out:
+                summary_text = live_out["summary"]
+        except Exception:
+            pass
+
     plan_resp = AnalyzeResponse(
         run_id=run_id,
         answer_type="plan",
-        summary="T-07, T-12, and T-19 need service. Best windows are calm, low-price days optimized via Google OR-Tools CP-SAT.",
+        summary=summary_text,
         turbine_findings=findings,
         recommendations=recs,
         assumptions=[
